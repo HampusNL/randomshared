@@ -34,14 +34,14 @@ function Get-WinFirewallLog {
 #endregion
 
 #region Load logs and group them
-$LogFiles = Get-ChildItem -Path $LogFolderPath
+$LogFiles = Get-ChildItem -Path $LogFolderPath -Filter "*.log"
 $ParsedLogs = @()
 foreach ($LogFile in $LogFiles) {
     $FWLogContent = Get-Content -Path $LogFile
     # Filter out IGMP traffic
     $ParsedLogs += Get-WinFirewallLog -FwLogContent $FWLogContent | Where-Object { $_.Protocol -ne 2 }
 }
-$NewObjectGroupedData = $ParsedLogs | Group-Object -Property "DestinationPort","Protocol"
+$NewObjectGroupedData = $ParsedLogs | Group-Object -Property "DestinationPort","Protocol","Action"
 $FWInfo = foreach ($Group in $NewObjectGroupedData) {
     $NewObject = $Group.Group | Sort-Object -Property "LastAccess" | Select-Object -Last 1
     $NewObject.SourceIPs = (($Group.Group.SourceIPs -join ",") -split "," | Sort-Object -Unique) -join ","
@@ -60,14 +60,14 @@ $FWInfo = foreach ($Group in $NewObjectGroupedData) {
 # 137, 138, 139 NETBIOS
 $ExcludePorts = "139","138","137","5353","5355","1900","123","500"
 $FWInfoFiltered = $FWInfo | Where-Object { $_.Protocol -ne "ICMP" } | Where-Object { $_.DestinationPort -notin $ExcludePorts }
-$GroupedObjects = $FWInfoFiltered | Group-Object -Property "Protocol","DestinationPort"
+$GroupedObjects = $FWInfoFiltered | Group-Object -Property "Protocol","DestinationPort","Action"
 $FirewallOutput = foreach ($Group in $GroupedObjects) {
     [PSCustomObject][Ordered]@{
+        Action          = $Group.Group[0].Action
         Protocol        = $Group.Group[0].Protocol
         DestinationPort = $Group.Group[0].DestinationPort
         Count           = [int] ($Group.Group | Select-Object -ExpandProperty "Count" | Measure-Object -Sum).Sum
         SourceIPs       = (($Group.Group.SourceIPs -join ",") -split "," | Sort-Object -Unique) -join ","
-        Servers         = (($Group.Group.ComputerName -join ",") -split "," | Sort-Object -Unique) -join ","
     }
 }
 #endregion
@@ -87,7 +87,6 @@ if (Test-Path $FilePath) {
 
         # Join two comma seperated arrays together, split them so we can sort and remove duplicates and then join them with comma again.
         $NewObject.SourceIPs = (($Group.Group.SourceIPs -join ",") -split "," | Sort-Object -Unique) -join ","
-        $NewObject.Servers = (($Group.Group.Servers -join ",") -split "," | Sort-Object -Unique) -join ","
         $NewObject.Count = ($Group.Group | Select-Object -ExpandProperty "Count" | Measure-Object -Sum).Sum
 
         $NewObject
