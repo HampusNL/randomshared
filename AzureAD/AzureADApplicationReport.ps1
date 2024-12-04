@@ -26,7 +26,7 @@ https://github.com/microsoftgraph/msgraph-sdk-powershell
 #>
 
 <# Create a new local cert you can upload to the app registration
-$CertName = "ExobeHampus2024"
+$CertName = "mycert"
 $Cert = New-SelfSignedCertificate -Type Custom -DnsName $CertName -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.2") -KeyAlgorithm RSA -KeyLength 2048 -CertStoreLocation "Cert:\CurrentUser\My" -FriendlyName $CertName -Subject $CertName
 Export-Certificate -Cert $Cert -FilePath "$($env:USERPROFILE)\Desktop\$certname.cer"
 #>
@@ -34,10 +34,10 @@ Export-Certificate -Cert $Cert -FilePath "$($env:USERPROFILE)\Desktop\$certname.
 
 $Delimiter = '^' # Custom delimiter which is added to all arrays that are joined. Must never exist in the joined text strings.
 
-$Cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -match "ExobeHampus2024-9" }
+$Cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -match "mycert" }
 
-$TenantId = "9a26624c-9e7a-4e28-9e9d-e0e8e348b50c"
-$AppId = "9f19ebf3-8e4e-4ca2-ba3d-4dbce2c49170"
+$TenantId = "xxxx"
+$AppId = "xxxx"
 
 
 #  Permissions needed:
